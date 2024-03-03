@@ -17,8 +17,8 @@ module.exports = (config) => {
     const router = express.Router();
 
     //login and create
-    router.post('/add', authorizeAccessControll , uploadProfile.single('image') , addDoctor);
-    router.get('/all', authenticateToken, getAllDoctors);
+    router.post('/add', uploadProfile.single('profileimage') , addDoctor);
+    router.get('/all', getAllDoctors);
     router.get('/fetch/:doctorid', authorizeAccessControll, getDoctorById);
 
     router.put('/:doctorid', authorizeAccessControll, updateDoctor);

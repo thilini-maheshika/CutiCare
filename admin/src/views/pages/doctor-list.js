@@ -11,97 +11,91 @@ function DoctorList() {
   const [doctor, setDoctor] = useState([]);
   const [isLoading, setisLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [selectedDate, setSelectedDate] = useState(null);
+  // const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-    // const openModal = (info) => {
-    //   setIsModalOpen(true);
-    //   setSelectedDate(info.dateStr);
-    // };
+  // const openModal = (info) => {
+  //   setIsModalOpen(true);
+  //   setSelectedDate(info.dateStr);
+  // };
 
-    // const closeModal = () => {
-    //   setIsModalOpen(false);
-    // };
+  // const closeModal = () => {
+  //   setIsModalOpen(false);
+  // };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
 
-  const handleSubmit = async (formData) => {
-    //console.log(formData)
-    console.log(JSON.stringify(formData));
-    try {
-      // Call the postData function with the form data
-      await addData(formData);
-      handleCloseModal();
-    } catch (error) {
-      // Handle errors
-      console.log('Error posting data:', error);
-      toast.error('Error adding data!');
-    }
-  };
+  // const handleSubmit = async (formData) => {
+  //   //console.log(formData)
+  //   console.log(JSON.stringify(formData));
+  //   try {
+  //     // Call the postData function with the form data
+  //     await addData(formData);
+  //     // handleCloseModal();
+  //   } catch (error) {
+  //     // Handle errors
+  //     console.log('Error posting data:', error);
+  //     toast.error('Error adding data!');
+  //   }
+  // };
 
   const onFinish = (doctor) => {
     doctor.preventDefault();
     const formData = new FormData(doctor.target);
     const formDataObject = Object.fromEntries(formData);
-    handleSubmit(formDataObject);
+    addData(formData)
+
+    console.log(formDataObject)
   };
 
-  const addData = async (values) => {
+  const addData = async (formData) => {
+    console.log(formData)
     try {
-      const dataToSend = {
-        doctor_name: values.doctor_name,
-        specialty: values.specialty,
-        phonenumber: values.phonenumber,
-        profileimage: values.profileimage
-      };
+      const response = await axios.post(
+        process.env.REACT_APP_API_ENDPOINT + '/doctor/add',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
-      const response = await axios.post('http://localhost:3006/doctor/add', dataToSend);
-
-      if (response && response.status === 200) {
-        fetchData();
-        toast.success('Data successfully added!');
-      } else if (response && response.status === 401) {
-        logout();
+      // Ensure response status is within the success range (2xx)
+      if (response && response.status >= 200 && response.status < 300) {
+        console.log(response.data); // Assuming response data contains useful information
       } else {
-        fetchData();
+        // If response status is not within the success range, handle the error
+        throw new Error('Failed to add data. Server responded with status: ' + response.status);
       }
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        window.location.reload();
-        logout();
-      } else if (error.response && error.response.data && error.response.data.error) {
-        toast.error(error.response.data.error);
-      } else {
-        console.log(error);
-        toast.error('An error occurred while adding the doctor');
-      }
+      console.error('Error adding data:', error);
+      // Optionally rethrow the error to let the calling code handle it further
+      throw error;
     } finally {
+      // Regardless of success or failure, ensure isLoading is set to false
       setisLoading(false);
     }
   };
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:3006/api/doctor/all');
+      const response = await axios.get(process.env.REACT_APP_API_ENDPOINT + '/doctor/all');
 
       if (response.status === 200) {
         setDoctor(response.data.existingEvents);
-      } else {
-        fetchData();
       }
     } catch (error) {
-      if (error.response.status === 401) {
-        window.location.reload();
-      } else {
-        console.error(error);
-        setError({ message: error.message, has: true });
-        toast.error('An error occurred while fetching data.');
-      }
+
+      console.error(error);
+      setError({ message: error.message, has: true });
+      toast.error('An error occurred while fetching data.');
+
     } finally {
       setisLoading(false);
     }
@@ -147,10 +141,10 @@ function DoctorList() {
 
   const updateData = async (_id, values) => {
     const data = {
-        doctor_name: values.doctor_name,
-        specialty: values.specialty,
-        phonenumber: values.phonenumber,
-        profileimage: values.profileimage
+      doctor_name: values.doctor_name,
+      specialty: values.specialty,
+      phonenumber: values.phonenumber,
+      profileimage: values.profileimage
     };
 
     console.log(_id);
