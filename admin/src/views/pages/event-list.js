@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 // import FormModal from "../FormModal";
-import SimpleTable from '../../components/Table';
+import SimpleTable from '../../ui-component/table/Table';
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import { toast } from 'react-toastify';

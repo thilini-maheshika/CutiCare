@@ -1,21 +1,36 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role */
+/* eslint-disable no-unused-vars */
+
 import React, { useState, useEffect, useMemo } from 'react';
 // import FormModal from "../FormModal";
-import SimpleTable from '../../components/Table';
+import SimpleTable from '../../ui-component/table/Table';
+import PopUp from '../../ui-component/modal/PopUp';
+import defultItemImage from '../../assets/images/default/default-profile-image.png';
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
+import { useAlert } from 'context/AlertContext';
 import { toast } from 'react-toastify';
+import DoctorFrom from '../../component/form/DoctorFrom';
 import 'react-toastify/dist/ReactToastify.css';
-import { Box, Button, Modal, TextField, Typography } from '@mui/material';
+import { handleErrorResponse } from '../../ui-component/alert/Response';
 
 function DoctorList() {
   const [doctor, setDoctor] = useState([]);
   const [isLoading, setisLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [rowCount, setRowCount] = useState(0);
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10
+  });
+
+  const fileInputRef = React.createRef();
   // const [selectedDate, setSelectedDate] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+
 
   // const openModal = (info) => {
   //   setIsModalOpen(true);
@@ -44,58 +59,24 @@ function DoctorList() {
   //   }
   // };
 
-  const onFinish = (doctor) => {
-    doctor.preventDefault();
-    const formData = new FormData(doctor.target);
-    const formDataObject = Object.fromEntries(formData);
-    addData(formData)
 
-    console.log(formDataObject)
-  };
-
-  const addData = async (formData) => {
-    console.log(formData)
-    try {
-      const response = await axios.post(
-        process.env.REACT_APP_API_ENDPOINT + '/doctor/add',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      // Ensure response status is within the success range (2xx)
-      if (response && response.status >= 200 && response.status < 300) {
-        console.log(response.data); // Assuming response data contains useful information
-      } else {
-        // If response status is not within the success range, handle the error
-        throw new Error('Failed to add data. Server responded with status: ' + response.status);
-      }
-    } catch (error) {
-      console.error('Error adding data:', error);
-      // Optionally rethrow the error to let the calling code handle it further
-      throw error;
-    } finally {
-      // Regardless of success or failure, ensure isLoading is set to false
-      setisLoading(false);
-    }
-  };
 
   const fetchData = async () => {
     try {
-      const response = await axios.get(process.env.REACT_APP_API_ENDPOINT + '/doctor/all');
+      const response = await axios.get(process.env.REACT_APP_API_ENDPOINT + '/doctor/all',
+        {
+          params: {
+            page: pagination.pageIndex,
+            pageSize: pagination.pageSize
+          }
+        });
 
       if (response.status === 200) {
-        setDoctor(response.data.existingEvents);
+        setDoctor(response.data.data);
+        setRowCount(response.data.totalItems);
       }
     } catch (error) {
-
-      console.error(error);
-      setError({ message: error.message, has: true });
-      toast.error('An error occurred while fetching data.');
-
+      handleErrorResponse(error);
     } finally {
       setisLoading(false);
     }
@@ -171,6 +152,30 @@ function DoctorList() {
     }
   };
 
+
+  const handleDeleteClick = async (id) => {
+    try {
+      setisLoading(true);
+      const response = await axios.delete(process.env.REACT_APP_API_ENDPOINT + '/doctor/delete/' + id);
+
+      if (response.status === 200) {
+        toast.success('Doctor updated successfully!');
+        fetchData();
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+        setisLoading(false);
+    }
+  };
+
+  const loadImageUpload = () => {
+    const fileInput = fileInputRef.current;
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -194,11 +199,64 @@ function DoctorList() {
       {
         accessorKey: 'profileimage',
         header: 'Profile Image',
-        enableColumnActions: true
+        enableColumnActions: true,
+        Cell: ({ rowNumber, renderedCellValue, onCellValueChange, isEditing }) => (
+          <div>
+            <img
+              src={renderedCellValue ? `${process.env.REACT_APP_API_ENDPOINT}/doctor/profileimage/${renderedCellValue}` : defultItemImage}
+              alt="Profile"
+              role="button"
+              tabIndex="0"
+              onClick={() => {
+                if (renderedCellValue) {
+                  const fileInput = fileInputRef.current;
+                  if (fileInput) {
+                    fileInput.click();
+                  }
+                } else {
+                  loadImageUpload(rowNumber);
+                }
+              }}
+              onKeyDown={(e) => {
+                // Handle keyboard events
+                if (e.key === 'Enter' || e.key === ' ') {
+                  // Trigger the same action as click when Enter or Space is pressed
+                  if (isEditing) {
+                    const fileInput = fileInputRef.current;
+                    if (fileInput) {
+                      fileInput.click();
+                    }
+                  } else {
+                    loadImageUpload(rowNumber);
+                  }
+                }
+              }}
+              style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '10px',
+                backgroundColor: '#ffff',
+                cursor: 'pointer'
+              }}
+            />
+            {isEditing && (
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={(event) => onCellValueChange('item_image', event.target.files[0])}
+              />
+            )}
+          </div>
+        )
       }
     ],
     []
   );
+
+  useEffect(() => {
+    fetchData();
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   return (
     <>
@@ -207,15 +265,19 @@ function DoctorList() {
           <Grid item xs={24} sm={12}>
             <SimpleTable
               tableHeading="Doctor List"
+              handleDeleteClick={handleDeleteClick}
               columns={columns}
+              rowCount={rowCount}
               getData={doctor}
               deletedata={deletedata}
               handleSaveRow={handleSaveRow}
               isLoading={isLoading}
+              pagination={pagination}
+              setPagination={setPagination}
               isModalOpen={isModalOpen}
               setIsModalOpen={setIsModalOpen}
               addButtonHeading="Add Doctor"
-              idName="id"
+              idName="doctorid"
               enableClickToCopy
               enableRowNumbers={false}
               enableRowVirtualization={false}
@@ -224,81 +286,13 @@ function DoctorList() {
         </Grid>
       </div>
 
-      <Modal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        aria-labelledby="add-user-modal-title"
-        aria-describedby="add-user-modal-description"
-      >
-        {
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 400,
-              bgcolor: '#E8E9EB',
-              boxShadow: 24,
-              p: 4,
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}
-          >
-            <form name="basic" onSubmit={onFinish} autoComplete="off">
-              <Typography variant="h5" align="center" marginBottom={5}>
-                Add Doctor
-              </Typography>
-
-              <TextField
-                label="Doctor Name"
-                name="doctor_name"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <TextField
-                label="Specialty"
-                name="specialty"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <TextField
-                label="Phone Number"
-                name="phonenumber"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <TextField
-                label=""
-                name="profileimage"
-                variant="outlined"
-                type="file"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                <Button variant="contained" type="submit" sx={{ marginRight: '10px' }}>
-                  Submit
-                </Button>
-                <Button variant="contained" onClick={handleCloseModal} type="button" sx={{ marginLeft: '10px' }}>
-                  Cancel
-                </Button>
-              </Box>
-            </form>
-          </Box>
-        }
-      </Modal>
+      <PopUp
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        title="Add Doctor"
+        content="Welcome"
+        form={<DoctorFrom handleCloseModal={handleCloseModal} setisLoading={setisLoading} />}
+      />
     </>
   );
 }

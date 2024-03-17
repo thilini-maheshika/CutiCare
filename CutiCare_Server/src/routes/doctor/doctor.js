@@ -21,8 +21,10 @@ module.exports = (config) => {
     router.get('/all', getAllDoctors);
     router.get('/fetch/:doctorid', authorizeAccessControll, getDoctorById);
 
+    router.use('/profileimage', express.static('src/uploads/profile/'));
+    
     router.put('/:doctorid', authorizeAccessControll, updateDoctor);
-    router.put('/delete/:doctorid', authorizeAccessControll, deleteDoctorById);
+    router.delete('/delete/:doctorid', deleteDoctorById);
     router.delete('/delete', authorizeAccessControll, deleteMultiDoctors);
 
     return router;

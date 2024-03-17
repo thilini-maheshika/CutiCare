@@ -1,14 +1,23 @@
 const DoctorModel = require("./DoctorModel");
 
-const getAllDoctors = (req, res) => {
-  DoctorModel.getAllDoctors((error, results) => {
-    if (error) {
-      res.status(500).send({ error: 'Error fetching data from the database' });
-      return;
-    }
+const getAllDoctors = async (req, res) => {
+  const { page, pageSize } = req.query;
 
-    res.status(200).send(results);
-  });
+  const pageNumber = parseInt(page, 10);
+  const itemsPerPage = parseInt(pageSize, 10);
+
+  if (isNaN(pageNumber) || isNaN(itemsPerPage) || pageNumber < 0 || itemsPerPage <= 0) {
+    return res.status(400).send({ error: "Invalid page or pageSize parameter" });
+  }
+
+  const offset = pageNumber * itemsPerPage; 
+
+  try {
+    const { results, totalItems } = await DoctorModel.getAllDoctors(offset, itemsPerPage);
+    res.status(200).send({ data: results, totalItems });
+  } catch (error) {
+    res.status(500).send({ error: 'Error fetching data from the database' });
+  }
 };
 
 const getDoctorById = (req, res) => {
@@ -108,29 +117,27 @@ const updateDoctor = (req, res) => {
   }
 };
 
-const deleteDoctorById = (req, res) => {
+const deleteDoctorById = async (req, res) => {
   const { doctorid } = req.params;
 
-  DoctorModel.getDoctorById(doctorid, (error, results) => {
-    if (error) {
-      res.status(500).send({ error: 'Error fetching data from the database' });
-      return;
+  try {
+    // Check if the doctor exists
+    const doctor = await DoctorModel.getDoctorById(doctorid);
+
+    if (!doctor) {
+      return res.status(404).send({ error: 'Doctor not found' });
     }
 
-    if (results.length === 0) {
-      res.status(404).send({ error: 'Doctor not found' });
-      return;
-    }
+    // Delete the doctor
+    await DoctorModel.deleteDoctor(doctorid);
 
-    DoctorModel.deleteDoctor(doctorid, 1, (error, results) => {
-      if (error) {
-        res.status(500).send({ error: 'Error updating deletion in the database' });
-        return;
-      }
-
-      res.status(200).send({ message: 'Doctor deleted successfully' });
-    });
-  });
+    // Send success response
+    res.status(200).send({ message: 'Doctor deleted successfully' });
+  } catch (error) {
+    // Handle errors
+    console.error('Error deleting doctor:', error);
+    res.status(500).send({ error: 'Error deleting doctor' });
+  }
 };
 
 const deleteMultiDoctors = (req, res) => {

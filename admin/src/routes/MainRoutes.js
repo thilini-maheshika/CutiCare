@@ -40,11 +40,11 @@ const MainRoutes = {
     //   ]
     // },
     {
-      path: '/pages/doctor-list',
+      path: '/doctor-list',
       element: <DoctorRoute />
     } ,
     {
-      path: '/pages/hospital-list',
+      path: '/hospital-list',
       element: <HospitalRoute />
     }
   ]

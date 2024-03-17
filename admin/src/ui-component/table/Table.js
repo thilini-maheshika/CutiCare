@@ -1,10 +1,18 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role */
+/* eslint-disable no-unused-vars */
+
 import React, { useRef } from "react";
 import { MaterialReactTable } from "material-react-table";
+
 import {
   Box,
   ThemeProvider,
   Typography,
   Button,
+  IconButton,
+  Alert,
+  AlertTitle,
 } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -15,6 +23,9 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Slide from "@mui/material/Slide";
+import { Delete, Edit } from "@mui/icons-material";
+import { useAlert } from "../../context/AlertContext";
+import { IconUser } from "@tabler/icons";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -23,14 +34,17 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 function SimpleTable(props) {
   // const [selectedRows, setSelectedRows] = useState([]);
   const tableInstanceRef = useRef(null);
-
   const {
     columns,
     getData,
+    rowCount,
     isLoading,
     enableRowNumbers,
     enableRowVirtualization,
+    setPagination,
+    pagination,
     tableHeading,
+    handleDeleteClick,
     idName,
     setIsModalOpen,
     addButtonHeading,
@@ -38,7 +52,7 @@ function SimpleTable(props) {
   } = props;
 
   const [open, setOpen] = React.useState(false);
-
+  const { showAlert } = useAlert();
   // const handleClickOpen = () => {
   //   setOpen(true);
   // };
@@ -47,9 +61,9 @@ function SimpleTable(props) {
     setOpen(false);
   };
 
-//   const handleOpenModal = () => {
-//     setIsModalOpen(true);
-//   };
+  //   const handleOpenModal = () => {
+  //     setIsModalOpen(true);
+  //   };
 
   const theme = createTheme({
     palette: {
@@ -79,24 +93,22 @@ function SimpleTable(props) {
           },
         },
       },
-      MuiInputLabel: {
-        styleOverrides: {
-          root: {
-            "&.Mui-focused": {
-              color: "#1890ff",
-            },
-          },
-        },
-      },
+
     },
   });
+
+
+  const handleEditClick = () => {
+    console.log('dadadada');
+    showAlert('Custom Row Action Clicked!');
+  };
 
   return (
     <ThemeProvider theme={theme}>
       <MaterialReactTable
         columns={columns}
         data={getData}
-        getRowId={(row) => row[idName]}        
+        getRowId={(row) => row[idName]}
         renderTopToolbarCustomActions={() => (
           <Box sx={{ display: 'flex', gap: '2rem', p: '0.5rem', flexWrap: 'wrap' }}>
             <Typography variant="h4" style={{ fontSize: '1.5rem' }}>
@@ -111,31 +123,54 @@ function SimpleTable(props) {
               {addButtonHeading}
             </Button>
 
-            <Button color="primary" onClick={ () => {console.log(tableInstanceRef.current?.getSelectedRowModel().rows)}} startIcon={<DeleteIcon />} variant="contained">
+            <Button color="primary" onClick={() => { console.log(tableInstanceRef.current?.getSelectedRowModel().rows) }} startIcon={<DeleteIcon />} variant="contained">
 
               Delete
             </Button>
           </Box>
         )}
-        
+        rowCount={rowCount}
         enableEditing
         enablePagination={true}
         editingMode="row"
+        positionPagination="bottom"
         enableRowSelection={true}
         enableColumnOrdering
         state={{
-          isLoading: isLoading
+          isLoading: isLoading,
+          showProgressBars: isLoading,
+          pagination
         }}
+        initialState={{
+          density: 'compact'
+        }}
+        paginationDisplayMode="pages"
+        manualPagination={true}
+        onPaginationChange={setPagination}
         onEditingRowSave={props.handleSaveRow}
         enableColumnActions={false}
         enableRowNumbers={enableRowNumbers}
         enableRowVirtualization={enableRowVirtualization}
-        muiTableBodyRowProps={({ row }) => ({
-          onClick: row.getToggleSelectedHandler(),
-          sx: {
-            cursor: 'pointer'
+
+        enableRowActions
+        displayColumnDefOptions={{
+          'mrt-row-actions': {
+            Cell: ({ row }) => (
+              <>
+                <IconButton onClick={() => handleEditClick(row)}>
+                  <Edit />
+                </IconButton>
+                <IconButton onClick={() => handleViewUserClick(row)}>
+                  <IconUser />
+                </IconButton>
+                <IconButton onClick={() => handleDeleteClick(row.id)}>
+                  <Delete />
+                </IconButton>
+              </>
+            ),
+            size: 80
           }
-        })}
+        }}
         tableInstanceRef={tableInstanceRef}
       />
       <Dialog
@@ -156,7 +191,7 @@ function SimpleTable(props) {
             Cancel
           </Button>
           <div>
-          <Button
+            <Button
               color="primary"
               onClick={async () => {
                 const selectedRows =
@@ -170,7 +205,7 @@ function SimpleTable(props) {
               }}
               startIcon={<DeleteIcon />}
               variant="contained"
-              // disabled={selectedRows.length === 0}
+            // disabled={selectedRows.length === 0}
             >
               Delete
             </Button>

@@ -4,10 +4,14 @@ const queryAsync = util.promisify(connection.query).bind(connection);
 
 const DoctorModel = {
 
-    getAllDoctors: async () => {
+    getAllDoctors: async (offset, itemsPerPage) => {
         try {
-            const results = await queryAsync('SELECT * FROM doctor WHERE is_delete = 0');
-            return results;
+            const query = `SELECT * FROM doctor WHERE is_delete = 0 LIMIT ? OFFSET ?`;
+            const results = await queryAsync(query, [itemsPerPage, offset]);
+            const totalItemsResults = await queryAsync("SELECT COUNT(*) as total FROM doctor WHERE is_delete = 0");
+            const totalItems = totalItemsResults[0].total;
+
+            return { results, totalItems };
         } catch (error) {
             throw error;
         }
@@ -36,7 +40,7 @@ const DoctorModel = {
             const { doctor_name, specialty, phonenumber } = doctor;
             const trndate = new Date().toISOString().slice(0, 19).replace('T', ' ');
             const defaultValues = 0;
-            const activeValues = 1; 
+            const activeValues = 1;
 
             const query = 'INSERT INTO doctor (doctor_name, specialty, phonenumber, profileimage, trndate, doctor_status, is_delete) VALUES (?, ?, ?, ?, ?, ?, ?)';
             const values = [doctor_name, specialty, phonenumber, filePath, trndate, activeValues, defaultValues];
