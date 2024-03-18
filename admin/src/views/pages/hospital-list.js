@@ -1,33 +1,63 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role */
+/* eslint-disable no-unused-vars */
+
 import React, { useState, useEffect, useMemo } from 'react';
 // import FormModal from "../FormModal";
 import SimpleTable from '../../ui-component/table/Table';
 import Grid from '@mui/material/Grid';
-// import axios from 'axios';
-// import { toast } from 'react-toastify';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Box, Button, Modal, TextField, Typography } from '@mui/material';
+import HospitalFrom from '../../component/form/DoctorFrom';
+import { handleErrorResponse } from '../../ui-component/alert/Response';
 
 function HospitalList() {
   const [hospital, setHospital] = useState([]);
   const [isLoading, setisLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [selectedDate, setSelectedDate] = useState(null);
+  const [rowCount, setRowCount] = useState(0);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10
+  });
 
-    // const openModal = (info) => {
-    //   setIsModalOpen(true);
-    //   setSelectedDate(info.dateStr);
-    // };
-
-    // const closeModal = () => {
-    //   setIsModalOpen(false);
-    // };
+  const fileInputRef = React.createRef();
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+
+  // const openModal = (info) => {
+  //   setIsModalOpen(true);
+  //   setSelectedDate(info.dateStr);
+  // };
+
+  // const closeModal = () => {
+  //   setIsModalOpen(false);
+  // };
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(process.env.REACT_APP_API_ENDPOINT + '/hospital/all',
+        {
+          params: {
+            page: pagination.pageIndex,
+            pageSize: pagination.pageSize
+          }
+        });
+
+      if (response.status === 200) {
+        setDoctor(response.data.data);
+        setRowCount(response.data.totalItems);
+      }
+    } catch (error) {
+      handleErrorResponse(error);
+    } finally {
+      setisLoading(false);
+    }
   };
 
   const handleSubmit = async (formData) => {
@@ -41,6 +71,29 @@ function HospitalList() {
       // Handle errors
       console.log('Error posting data:', error);
       toast.error('Error adding data!');
+    }
+  };
+
+  const handleDeleteClick = async (id) => {
+    try {
+      setisLoading(true);
+      const response = await axios.delete(process.env.REACT_APP_API_ENDPOINT + '/doctor/delete/' + id);
+
+      if (response.status === 200) {
+        toast.success('Doctor updated successfully!');
+        fetchData();
+      }
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setisLoading(false);
+    }
+  };
+
+  const loadImageUpload = () => {
+    const fileInput = fileInputRef.current;
+    if (fileInput) {
+      fileInput.click();
     }
   };
 
@@ -85,96 +138,10 @@ function HospitalList() {
     }
   };
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get('http://localhost:3006/api/hospital/all');
-
-      if (response.status === 200) {
-        setHospital(response.data.existingEvents);
-      } else {
-        fetchData();
-      }
-    } catch (error) {
-      if (error.response.status === 401) {
-        window.location.reload();
-      } else {
-        console.error(error);
-        setError({ message: error.message, has: true });
-        toast.error('An error occurred while fetching data.');
-      }
-    } finally {
-      setisLoading(false);
-    }
-  };
-
-  const deletedata = async (dataArray) => {
-    if (dataArray.length > 0) {
-      console.log(dataArray);
-
-      // Create a new array with only the 'id' values
-      const idArray = dataArray.map((data) => data.id);
-
-      console.log(idArray);
-
-      try {
-        // setPending(true);
-
-        const response = await axios.delete(`http://localhost:3006/api/hospital/delete/${idArray}`);
-
-        if (response.status === 200) {
-          //   setPending(false);
-          fetchData();
-          toast.success('Hospital Deleted successfully!');
-        } else {
-          fetchData();
-        }
-      } catch (error) {
-        if (error.response.status === 401) {
-          window.location.reload();
-        }
-      } finally {
-        // setPending(false);
-      }
-    } else {
-      // Handle case when dataArray is empty
-    }
-  };
 
   const handleSaveRow = async ({ exitEditingMode, row, values }) => {
     await updateData(row.id, values);
     exitEditingMode();
-  };
-
-  const updateData = async (_id, values) => {
-    const data = {
-        hospital_name: values.hospital_name,
-        Location: values.Location,
-        phonenumber: values.phonenumber,
-        email: values.email
-    };
-
-    console.log(_id);
-    try {
-      //   setPending(true);
-
-      const response = await axios.put('http://localhost:3006/api/hospital/' + _id, data);
-
-      if (response.status === 200) {
-        // setPending(false);
-        toast.success('Hospital updated successfully!');
-        fetchData();
-      } else if (response.status === 401) {
-        window.location.reload();
-      } else {
-        fetchData();
-      }
-    } catch (error) {
-      if (error.response.status === 401) {
-        window.location.reload();
-      }
-    } finally {
-      //   setPending(false);
-    }
   };
 
   const columns = useMemo(
@@ -201,10 +168,69 @@ function HospitalList() {
         accessorKey: 'email',
         header: 'Email',
         enableColumnActions: true
+      },
+      {
+        accessorKey: 'profileimage',
+        header: 'Profile Image',
+        enableColumnActions: true,
+        Cell: ({ rowNumber, renderedCellValue, onCellValueChange, isEditing }) => (
+          <div>
+            <img
+              src={renderedCellValue ? `${process.env.REACT_APP_API_ENDPOINT}/hospital/profileimage/${renderedCellValue}` : defultItemImage}
+              alt="Profile"
+              role="button"
+              tabIndex="0"
+              onClick={() => {
+                if (renderedCellValue) {
+                  const fileInput = fileInputRef.current;
+                  if (fileInput) {
+                    fileInput.click();
+                  }
+                } else {
+                  loadImageUpload(rowNumber);
+                }
+              }}
+              onKeyDown={(e) => {
+                // Handle keyboard events
+                if (e.key === 'Enter' || e.key === ' ') {
+                  // Trigger the same action as click when Enter or Space is pressed
+                  if (isEditing) {
+                    const fileInput = fileInputRef.current;
+                    if (fileInput) {
+                      fileInput.click();
+                    }
+                  } else {
+                    loadImageUpload(rowNumber);
+                  }
+                }
+              }}
+              style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '10px',
+                backgroundColor: '#ffff',
+                cursor: 'pointer'
+              }}
+            />
+            {isEditing && (
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={(event) => onCellValueChange('item_image', event.target.files[0])}
+              />
+            )}
+          </div>
+        )
       }
     ],
     []
   );
+
+
+  useEffect(() => {
+    fetchData();
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   return (
     <>
@@ -221,7 +247,7 @@ function HospitalList() {
               isModalOpen={isModalOpen}
               setIsModalOpen={setIsModalOpen}
               addButtonHeading="Add Hospital"
-              idName="id"
+              idName="hospital_id"
               enableClickToCopy
               enableRowNumbers={false}
               enableRowVirtualization={false}
@@ -230,80 +256,13 @@ function HospitalList() {
         </Grid>
       </div>
 
-      <Modal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        aria-labelledby="add-user-modal-title"
-        aria-describedby="add-user-modal-description"
-      >
-        {
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 400,
-              bgcolor: '#E8E9EB',
-              boxShadow: 24,
-              p: 4,
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}
-          >
-            <form name="basic" onSubmit={onFinish} autoComplete="off">
-              <Typography variant="h5" align="center" marginBottom={5}>
-                Add Hospital
-              </Typography>
-
-              <TextField
-                label="Hospital Name"
-                name="hospital_name"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <TextField
-                label="Location"
-                name="Location"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <TextField
-                label="Phone Number"
-                name="phonenumber"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <TextField
-                label="Email"
-                name="email"
-                variant="outlined"
-                fullWidth
-                required
-                sx={{ mb: 2 }} // Add margin-bottom
-              />
-
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                <Button variant="contained" type="submit" sx={{ marginRight: '10px' }}>
-                  Submit
-                </Button>
-                <Button variant="contained" onClick={handleCloseModal} type="button" sx={{ marginLeft: '10px' }}>
-                  Cancel
-                </Button>
-              </Box>
-            </form>
-          </Box>
-        }
-      </Modal>
+      <PopUp
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        title="Add Hospital"
+        content="Welcome"
+        form={<HospitalFrom handleCloseModal={handleCloseModal} setisLoading={setisLoading} />}
+      />
     </>
   );
 }

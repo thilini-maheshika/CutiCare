@@ -9,20 +9,15 @@ const {
     getHospitalById,
 
 } = require('../../mvc//hospital/HospitalController');
-const { authenticateToken, authorizeValidateUser } = require('../../middlewares/userAuth');
-const { authorizeAccessControll } = require('../../middlewares/userAccess');
+const { uploadProfile } = require('../../../config/fileUpload');
 
 module.exports = (config) => {
     const router = express.Router();
 
-    //login and create
-    router.post('/add', authorizeAccessControll , addHospital);
-    router.get('/all', authenticateToken, getAllHospital);
-    router.get('/fetch/:hospitalid', authorizeAccessControll, getHospitalById);
-
-    router.put('/:hospitalid', authorizeAccessControll, updateHospital);
-    router.put('/delete/:hospitalid', authorizeAccessControll, deleteHospitalById);
-    router.delete('/delete', authorizeAccessControll, deleteMultiHospitals);
+    router.post('/add', uploadProfile.single('profileimage'), addHospital);
+    router.get('/all', getAllHospital);
+    router.delete('/delete/:hospitalid', deleteHospitalById);
+    router.use('/profileimage', express.static('src/uploads/profile/'));
 
     return router;
 };

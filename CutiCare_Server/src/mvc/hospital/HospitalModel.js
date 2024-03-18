@@ -1,53 +1,82 @@
 const { connection } = require('../../../config/connection');
+const util = require('util');
+const queryAsync = util.promisify(connection.query).bind(connection);
 
 const HospitalModel = {
-    getAllHospitals(callback) {
-        connection.query('SELECT * FROM hospital WHERE is_delete = 0', callback);
+
+    getAllHospital: async (offset, itemsPerPage) => {
+        try {
+            const query = `SELECT * FROM hospital WHERE is_delete = 0 LIMIT ? OFFSET ?`;
+            const results = await queryAsync(query, [itemsPerPage, offset]);
+            const totalItemsResults = await queryAsync("SELECT COUNT(*) as total FROM hospital WHERE is_delete = 0");
+            const totalItems = totalItemsResults[0].total;
+
+            return { results, totalItems };
+        } catch (error) {
+            throw error;
+        }
     },
 
-    getHospitalById(hospitalid, callback) {
-        connection.query('SELECT * FROM hospital WHERE hospitalid = ? AND is_delete = 0', [hospitalid], callback);
+    getHospitalByName: async (hospital_name) => {
+        try {
+            const results = await queryAsync('SELECT * FROM hospital WHERE hospital_name = ? AND is_delete = 0', [hospital_name]);
+            return results;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    getHospitalByName(hospital_name, callback){
-        connection.query('SELECT * FROM hospital WHERE hospital_name = ? AND is_delete = 0', [hospital_name], callback);
+    getHospitalById: async (hospital_id) => {
+        try {
+            const results = await queryAsync('SELECT * FROM hospital WHERE hospital_id = ? AND is_delete = 0', [hospital_id]);
+            return results;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    addHospital(hospital, callback) {
-        const { hospital_name, Location , phonenumber, email } = hospital;
-        const trndate = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        const defaultValues = 0;
-        const activeValues = 1;
-    
-        const query = 'INSERT INTO hospital (hospital_name, Location, phonenumber , email , trndate, hospital_status, is_delete) VALUES (?, ?, ?, ?, ? ,? ,?)';
-        const values = [hospital_name, Location, phonenumber , email , trndate, activeValues, defaultValues];
-    
-        connection.query(query, values, (error, results) => {
-          if (error) {
-            callback(error, null);
-            return;
-          }
-    
-          const hospitalid = results.insertId;
-          callback(null, hospitalid);
-        });
+    addHospital: async (hospital, filePath) => {
+        try {
+            const { hospital_name, location, phonenumber } = hospital;
+            const trndate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            const defaultValues = 0;
+            const activeValues = 1;
+
+            const query = 'INSERT INTO hospital (hospital_name, location, phonenumber, profileimage, trndate, status, is_delete) VALUES (?, ?, ?, ?, ?, ?, ?)';
+            const values = [hospital_name, location, phonenumber, filePath, trndate, activeValues, defaultValues];
+
+            const results = await queryAsync(query, values);
+
+            const hospital_id = results.insertId;
+            return hospital_id;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    updateHospital(hospital, hospitalid, callback) {
-        const { hospital_name, Location, phonenumber, email , hospital_status} = hospital;
-        const query = 'UPDATE hospital SET hospital_name = ?, Location = ?, phonenumber = ?, email = ? , hospital_status = ? WHERE hospitalid = ?';
-        const values = [hospital_name, Location, phonenumber, email , hospital_status, hospitalid];
-    
-        connection.query(query, values, callback);
+    updateHospital: async (hospital, hospital_id) => {
+        try {
+            const { hospital_name, location, phonenumber, status } = hospital;
+            const query = 'UPDATE hospital SET hospital_name = ?, location = ?, phonenumber = ?, status = ? WHERE hospital_id = ?';
+            const values = [hospital_name, location, phonenumber, status, hospital_id];
+
+            await queryAsync(query, values);
+        } catch (error) {
+            throw error;
+        }
     },
 
-    deleteHospital(hospitalid, value, callback) {
-        const query = 'UPDATE hospital SET is_delete = ? WHERE hospitalid = ?';
-        const values = [value, hospitalid];
-    
-        connection.query(query, values, callback);
+    deleteHospital: async (hospital_id, value) => {
+        try {
+            const query = 'UPDATE hospital SET is_delete = ? WHERE hospital_id = ?';
+            const values = [value, hospital_id];
+
+            await queryAsync(query, values);
+        } catch (error) {
+            throw error;
+        }
     },
 
-}
+};
 
 module.exports = HospitalModel;
