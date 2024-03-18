@@ -21,21 +21,19 @@ const getAllHospital = async (req, res) => {
   }
 };
 
-const getHospitalById = (req, res) => {
+const getHospitalById = async (req, res) => {
   const { hospitalid } = req.params;
-  HospitalModel.getHospitalById(hospitalid, (error, results) => {
-    if (error) {
-      res.status(500).send({ error: 'Error fetching data from the database' });
-      return;
-    }
-
+  try {
+    const results = await HospitalModel.getHospitalById(hospitalid);
     if (results.length === 0) {
       res.status(404).send({ error: 'Hospital not found' });
-      return;
+    } else {
+      res.status(200).send(results);
     }
-
-    res.status(200).send(results);
-  });
+  } catch (error) {
+    console.error("Error fetching data from the database:", error);
+    res.status(500).send({ error: 'Error fetching data from the database' });
+  }
 };
 
 const addHospital = async (req, res) => {
@@ -118,18 +116,18 @@ const updateHospital = (req, res) => {
 };
 
 const deleteHospitalById = async (req, res) => {
-  const { hospital_id } = req.params;
+  const { hospitalid } = req.params;
 
   try {
     // Check if the hospital exists
-    const hospital = await HospitalModel.getHospitalById(hospital_id);
+    const hospital = await HospitalModel.getHospitalById(hospitalid);
 
     if (!hospital) {
       return res.status(404).send({ error: 'hospital not found' });
     }
 
     // Delete the hospital
-    await HospitalModel.deleteHospital(hospital_id);
+    await HospitalModel.deleteHospital(hospitalid, 1);
 
     // Send success response
     res.status(200).send({ message: 'hospital deleted successfully' });

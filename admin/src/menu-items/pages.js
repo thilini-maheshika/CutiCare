@@ -1,79 +1,37 @@
 // assets
 import { IconKey } from '@tabler/icons';
-import { IconCalendarEvent  } from '@tabler/icons-react';
+import { IconCalendarEvent } from '@tabler/icons-react';
 
 // constant
 const icons = {
   IconKey,
-  IconCalendarEvent 
+  IconCalendarEvent
 };
 
 // ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
 
 const pages = {
   id: 'pages',
-  title: 'Pages',
+  // title: 'Pages',
   // caption: 'Pages Caption',
   type: 'group',
   children: [
     {
-      id: 'doctors',
-      title: 'Doctors',
-      type: 'collapse',
-      icon: icons.IconCalendarEvent ,
-
-      children: [
-        {
-          id: 'doctor-list',
-          title: 'Doctor List',
-          type: 'item',
-          url: '/pages/doctor-list',
-          target: true
-        }
-        
-      ]
+      id: 'doctor-list',
+      title: 'Doctor',
+      type: 'item',
+      url: '/doctor-list',
+      icon: icons.IconCalendarEvent,
+      breadcrumbs: false
     },
-
     {
-      id: 'hospital',
+      id: 'hospital-list',
       title: 'Hospital',
-      type: 'collapse',
-      icon: icons.IconCalendarEvent ,
-
-      children: [
-        {
-          id: 'hospital-list',
-          title: 'Hospital List',
-          type: 'item',
-          url: '/pages/hospital-list',
-          target: true
-        }
-        
-      ]
-    },
-
-    {
-      id: 'authentication',
-      title: 'Account',
-      type: 'collapse',
+      type: 'item',
+      url: 'hospital-list',
       icon: icons.IconKey,
-
-      children: [
-        {
-          id: 'login3',
-          title: 'Login',
-          type: 'item',
-          url: '/pages/login/login3',
-          target: true
-        },
-        {
-          id: 'register3',
-          title: 'Register',
-          type: 'item',
-          url: '/pages/register/register3',
-          target: true
-        }
-      ]
+      external: true,
+      target: true
     }
   ]
 };

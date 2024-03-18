@@ -34,6 +34,7 @@ function DoctorFrom(props) {
                 props.handleCloseModal();
                 handleSuccessResponse(response.data.message);
                 showAlert(response.data.message, 'success');
+                props.fetchData();
             }
         } catch (error) {
             handleErrorResponse(error);

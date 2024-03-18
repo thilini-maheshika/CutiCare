@@ -6,10 +6,15 @@ import { Box, Button, TextField, Typography } from "@mui/material";
 import axios from 'axios';
 import { handleErrorResponse, handleSuccessResponse } from '../../ui-component/alert/Response';
 import { useAlert } from '../../context/AlertContext';
+import { useEffect } from "react";
+import { useState } from "react";
 
 function HospitalFrom(props) {
-    const { formData } = props;
+    const { hospitalTemp } = props;
     const { showAlert } = useAlert();
+    const [hospitalTmp, setHospitalTmp] = useState([]);
+
+
     const onFinish = (doctor) => {
         doctor.preventDefault();
         const formData = new FormData(doctor.target);
@@ -34,11 +39,32 @@ function HospitalFrom(props) {
                 props.handleCloseModal();
                 handleSuccessResponse(response.data.message);
                 showAlert(response.data.message, 'success');
+                props.fetchData();
             }
         } catch (error) {
             handleErrorResponse(error);
         } finally {
             // Regardless of success or failure, ensure isLoading is set to false
+            props.setisLoading(false);
+            props.fetchData();
+        }
+    };
+
+    useEffect(() => {
+        fetchEditData();
+    }, [hospitalTemp])
+
+    const fetchEditData = async () => {
+        try {
+            const response = await axios.get(process.env.REACT_APP_API_ENDPOINT + '/hospital/get/' + hospitalTemp);
+
+            if (response.status === 200) {
+                setHospitalTmp(response.data[0]);
+
+            }
+        } catch (error) {
+            handleErrorResponse(error);
+        } finally {
             props.setisLoading(false);
         }
     };
@@ -65,6 +91,15 @@ function HospitalFrom(props) {
                 />
 
                 <TextField
+                    label="Email"
+                    name="email"
+                    variant="outlined"
+                    fullWidth
+                    required
+                    sx={{ mb: 2 }} // Add margin-bottom
+                />
+
+                <TextField
                     label="Phone Number"
                     name="phonenumber"
                     variant="outlined"
@@ -82,10 +117,9 @@ function HospitalFrom(props) {
                     required
                     sx={{ mb: 2 }} // Add margin-bottom
                 />
-
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                     <Button variant="contained" type="submit" sx={{ marginRight: '10px' }}>
-                        Submit
+                        {hospitalTemp > 0 ? 'Save' : 'Submit'}
                     </Button>
                     <Button variant="contained" onClick={props.handleCloseModal} type="button" sx={{ marginLeft: '10px' }}>
                         Cancel

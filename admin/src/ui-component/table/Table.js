@@ -26,6 +26,7 @@ import Slide from "@mui/material/Slide";
 import { Delete, Edit } from "@mui/icons-material";
 import { useAlert } from "../../context/AlertContext";
 import { IconUser } from "@tabler/icons";
+import { useState } from "react";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -41,17 +42,20 @@ function SimpleTable(props) {
     isLoading,
     enableRowNumbers,
     enableRowVirtualization,
+    setHospitalTemp,
     setPagination,
     pagination,
     tableHeading,
     handleDeleteClick,
+    handleEditClick,
     idName,
     setIsModalOpen,
     addButtonHeading,
 
   } = props;
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [id, setId] = useState(0);
   const { showAlert } = useAlert();
   // const handleClickOpen = () => {
   //   setOpen(true);
@@ -97,12 +101,6 @@ function SimpleTable(props) {
     },
   });
 
-
-  const handleEditClick = () => {
-    console.log('dadadada');
-    showAlert('Custom Row Action Clicked!');
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <MaterialReactTable
@@ -123,10 +121,10 @@ function SimpleTable(props) {
               {addButtonHeading}
             </Button>
 
-            <Button color="primary" onClick={() => { console.log(tableInstanceRef.current?.getSelectedRowModel().rows) }} startIcon={<DeleteIcon />} variant="contained">
+            {/* <Button color="primary" onClick={() => { console.log(tableInstanceRef.current?.getSelectedRowModel().rows) }} startIcon={<DeleteIcon />} variant="contained">
 
               Delete
-            </Button>
+            </Button> */}
           </Box>
         )}
         rowCount={rowCount}
@@ -157,13 +155,16 @@ function SimpleTable(props) {
           'mrt-row-actions': {
             Cell: ({ row }) => (
               <>
-                <IconButton onClick={() => handleEditClick(row)}>
+                <IconButton onClick={() => handleEditClick(row.id)}>
                   <Edit />
                 </IconButton>
                 <IconButton onClick={() => handleViewUserClick(row)}>
                   <IconUser />
                 </IconButton>
-                <IconButton onClick={() => handleDeleteClick(row.id)}>
+                <IconButton onClick={() => {
+                  setOpen(true);
+                  setId(row.id);
+                }}>
                   <Delete />
                 </IconButton>
               </>
@@ -194,18 +195,12 @@ function SimpleTable(props) {
             <Button
               color="primary"
               onClick={async () => {
-                const selectedRows =
-                  tableInstanceRef.current?.getSelectedRowModel().rows;
-                if (selectedRows && selectedRows.length > 0) {
-                  await props.deletedata(selectedRows);
-                  handleClose(); // Close the dialog after successful deletion
-                } else {
-                  console.log("No rows selected.");
-                }
+                handleDeleteClick(id);
+                handleClose();
+                setId(0);
               }}
               startIcon={<DeleteIcon />}
               variant="contained"
-            // disabled={selectedRows.length === 0}
             >
               Delete
             </Button>

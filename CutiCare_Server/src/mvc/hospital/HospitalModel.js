@@ -26,9 +26,9 @@ const HospitalModel = {
         }
     },
 
-    getHospitalById: async (hospital_id) => {
+    getHospitalById: async (hospitalid) => {
         try {
-            const results = await queryAsync('SELECT * FROM hospital WHERE hospital_id = ? AND is_delete = 0', [hospital_id]);
+            const results = await queryAsync('SELECT * FROM hospital WHERE hospitalid = ? AND is_delete = 0', [hospitalid]);
             return results;
         } catch (error) {
             throw error;
@@ -37,13 +37,13 @@ const HospitalModel = {
 
     addHospital: async (hospital, filePath) => {
         try {
-            const { hospital_name, location, phonenumber } = hospital;
+            const { hospital_name, location, phonenumber, email } = hospital;
             const trndate = new Date().toISOString().slice(0, 19).replace('T', ' ');
             const defaultValues = 0;
             const activeValues = 1;
 
-            const query = 'INSERT INTO hospital (hospital_name, location, phonenumber, profileimage, trndate, status, is_delete) VALUES (?, ?, ?, ?, ?, ?, ?)';
-            const values = [hospital_name, location, phonenumber, filePath, trndate, activeValues, defaultValues];
+            const query = 'INSERT INTO hospital (hospital_name, location, phonenumber, email, profileimage, trndate, hospital_status, is_delete) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+            const values = [hospital_name, location, phonenumber, email, filePath, trndate, activeValues, defaultValues];
 
             const results = await queryAsync(query, values);
 
@@ -54,11 +54,11 @@ const HospitalModel = {
         }
     },
 
-    updateHospital: async (hospital, hospital_id) => {
+    updateHospital: async (hospital, hospitalid) => {
         try {
             const { hospital_name, location, phonenumber, status } = hospital;
-            const query = 'UPDATE hospital SET hospital_name = ?, location = ?, phonenumber = ?, status = ? WHERE hospital_id = ?';
-            const values = [hospital_name, location, phonenumber, status, hospital_id];
+            const query = 'UPDATE hospital SET hospital_name = ?, location = ?, phonenumber = ?, status = ? WHERE hospitalid = ?';
+            const values = [hospital_name, location, phonenumber, status, hospitalid];
 
             await queryAsync(query, values);
         } catch (error) {
@@ -66,10 +66,10 @@ const HospitalModel = {
         }
     },
 
-    deleteHospital: async (hospital_id, value) => {
+    deleteHospital: async (hospitalid, value) => {
         try {
-            const query = 'UPDATE hospital SET is_delete = ? WHERE hospital_id = ?';
-            const values = [value, hospital_id];
+            const query = 'UPDATE hospital SET is_delete = ? WHERE hospitalid = ?';
+            const values = [value, hospitalid];
 
             await queryAsync(query, values);
         } catch (error) {

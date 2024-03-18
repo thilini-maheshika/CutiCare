@@ -290,8 +290,9 @@ function DoctorList() {
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         title="Add Doctor"
+        fetchData={fetchData}
         content="Welcome"
-        form={<DoctorFrom handleCloseModal={handleCloseModal} setisLoading={setisLoading} />}
+        form={<DoctorFrom handleCloseModal={handleCloseModal} fetchData={fetchData} setisLoading={setisLoading} />}
       />
     </>
   );

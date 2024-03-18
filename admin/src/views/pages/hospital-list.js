@@ -9,14 +9,17 @@ import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import HospitalFrom from '../../component/form/DoctorFrom';
+import HospitalFrom from '../../component/form/HospitalFrom';
 import { handleErrorResponse } from '../../ui-component/alert/Response';
+import PopUp from '../../ui-component/modal/PopUp';
 
 function HospitalList() {
   const [hospital, setHospital] = useState([]);
   const [isLoading, setisLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+
+  const [hospitalTemp, setHospitalTemp] = useState(0);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -27,17 +30,13 @@ function HospitalList() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setHospitalTemp(0);
   };
 
 
-  // const openModal = (info) => {
-  //   setIsModalOpen(true);
-  //   setSelectedDate(info.dateStr);
-  // };
-
-  // const closeModal = () => {
-  //   setIsModalOpen(false);
-  // };
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
 
   const fetchData = async () => {
     try {
@@ -50,7 +49,7 @@ function HospitalList() {
         });
 
       if (response.status === 200) {
-        setDoctor(response.data.data);
+        setHospital(response.data.data);
         setRowCount(response.data.totalItems);
       }
     } catch (error) {
@@ -77,7 +76,7 @@ function HospitalList() {
   const handleDeleteClick = async (id) => {
     try {
       setisLoading(true);
-      const response = await axios.delete(process.env.REACT_APP_API_ENDPOINT + '/doctor/delete/' + id);
+      const response = await axios.delete(process.env.REACT_APP_API_ENDPOINT + '/hospital/delete/' + id);
 
       if (response.status === 200) {
         toast.success('Doctor updated successfully!');
@@ -138,6 +137,39 @@ function HospitalList() {
     }
   };
 
+  const deletedata = async (dataArray) => {
+    if (dataArray.length > 0) {
+      console.log(dataArray);
+
+      // Create a new array with only the 'id' values
+      const idArray = dataArray.map((data) => data.id);
+
+      console.log(idArray);
+
+      try {
+        // setPending(true);
+
+        const response = await axios.delete(`http://localhost:3006/api/doctor/delete/${idArray}`);
+
+        if (response.status === 200) {
+          //   setPending(false);
+          fetchData();
+          toast.success('Doctor Deleted successfully!');
+        } else {
+          fetchData();
+        }
+      } catch (error) {
+        if (error.response.status === 401) {
+          window.location.reload();
+        }
+      } finally {
+        // setPending(false);
+      }
+    } else {
+      // Handle case when dataArray is empty
+    }
+  };
+
 
   const handleSaveRow = async ({ exitEditingMode, row, values }) => {
     await updateData(row.id, values);
@@ -153,7 +185,7 @@ function HospitalList() {
       },
 
       {
-        accessorKey: 'Location',
+        accessorKey: 'location',
         header: 'Location',
         enableColumnActions: true
       },
@@ -227,6 +259,12 @@ function HospitalList() {
     []
   );
 
+  const handleEditClick = (id) => {
+    setHospitalTemp(id);
+    openModal();
+    console.log(hospitalTemp);
+  }
+
 
   useEffect(() => {
     fetchData();
@@ -241,13 +279,18 @@ function HospitalList() {
               tableHeading="Hospital List"
               columns={columns}
               getData={hospital}
+              rowCount={rowCount}
+              handleDeleteClick={handleDeleteClick}
+              handleEditClick={handleEditClick}
               deletedata={deletedata}
+              setHospitalTemp={setHospitalTemp}
               handleSaveRow={handleSaveRow}
               isLoading={isLoading}
+              pagination={pagination}
               isModalOpen={isModalOpen}
               setIsModalOpen={setIsModalOpen}
               addButtonHeading="Add Hospital"
-              idName="hospital_id"
+              idName="hospitalid"
               enableClickToCopy
               enableRowNumbers={false}
               enableRowVirtualization={false}
@@ -259,9 +302,9 @@ function HospitalList() {
       <PopUp
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
-        title="Add Hospital"
-        content="Welcome"
-        form={<HospitalFrom handleCloseModal={handleCloseModal} setisLoading={setisLoading} />}
+        fetchData={fetchData}
+        title={hospitalTemp > 0 ? 'Edit Hospital' : 'Add Hospital'}
+        form={<HospitalFrom hospitalTemp={hospitalTemp} handleCloseModal={handleCloseModal} fetchData={fetchData} setisLoading={setisLoading} />}
       />
     </>
   );

@@ -15,7 +15,8 @@ module.exports = (config) => {
     const router = express.Router();
 
     router.post('/add', uploadProfile.single('profileimage'), addHospital);
-    router.get('/all', getAllHospital);
+    router.get('/all', getAllHospital);        
+    router.get('/get/:hospitalid', getHospitalById);
     router.delete('/delete/:hospitalid', deleteHospitalById);
     router.use('/profileimage', express.static('src/uploads/profile/'));
 

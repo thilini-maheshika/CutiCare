@@ -53,11 +53,12 @@ const tableInfo = [
   {
     tableName: 'hospital',
     fields: [
-      { name: 'hospitalId', type: 'INT AUTO_INCREMENT PRIMARY KEY' },
+      { name: 'hospitalid', type: 'INT AUTO_INCREMENT PRIMARY KEY' },
       { name: 'hospital_name', type: 'VARCHAR(255)' },
-      { name: 'Location', type: 'VARCHAR(255)' },
+      { name: 'location', type: 'VARCHAR(255)' },
       { name: 'phonenumber', type: 'VARCHAR(15)' },
       { name: 'email', type: 'VARCHAR(255)' },
+      { name: "profileimage", type: "VARCHAR(255)" },
       { name: 'hospital_status', type: 'INT(5)' },
       { name: 'trndate', type: 'DATETIME' },
       { name: 'is_delete', type: 'INT(5)' },

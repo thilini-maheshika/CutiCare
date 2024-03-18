@@ -10,7 +10,7 @@ module.exports = (config) => {
   //access control routes
   router.use('/user', userRoute(config)); //admin user only
   router.use('/doctor', DoctorRoute(config));
-  // router.use('/hospital', HospitalRoute(config));
+  router.use('/hospital', HospitalRoute(config));
   // router.use('/doctor_assign', DoctorAssign(config));
 
   return router;
